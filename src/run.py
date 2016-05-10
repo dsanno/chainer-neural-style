@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     def on_epoch_done(epoch, x, content_losses, style_losses):
         if (epoch + 1) % 100 == 0:
-            image = vgg.postprocess(cuda.to_cpu(x.data.copy())[0], output_type='RGB').clip(0, 255).astype(np.uint8)
+            image = vgg.postprocess(cuda.to_cpu(x.data)[0], output_type='RGB').clip(0, 255).astype(np.uint8)
             Image.fromarray(image).save(os.path.join(args.out_dir, 'out_{0:04d}.jpg'.format(epoch + 1)))
             print 'epoch {} done'.format(epoch + 1)
             for i, (content_loss, style_loss) in enumerate(zip(content_losses, style_losses)):
