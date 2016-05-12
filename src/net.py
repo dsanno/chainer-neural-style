@@ -35,14 +35,17 @@ class VGG(chainer.Chain):
             return image
 
     def weights(self):
-        return [0, 0, 0.5, 0.5], [0.25, 0.25, 0.25, 0.25]
+#        return [0, 0, 0.5, 0.5], [0.25, 0.25, 0.25, 0.25]
+        return [0, 0, 0.5, 0.5], [0, 0.5, 0.5, 0]
 
     def __call__(self, x):
-        y1 = F.relu(self.conv1_2(F.relu(self.conv1_1(x))))
-        h = F.average_pooling_2d(y1, 2, stride=2)
-        y2 = F.relu(self.conv2_2(F.relu(self.conv2_1(h))))
-        h = F.average_pooling_2d(y2, 2, stride=2)
-        y3 = F.relu(self.conv3_3(F.relu(self.conv3_2(F.relu(self.conv3_1(h))))))
-        h = F.average_pooling_2d(y3, 2, stride=2)
-        y4 = F.relu(self.conv4_3(F.relu(self.conv4_2(F.relu(self.conv4_1(h))))))
-        return [y1, y2, y3, y4]
+        layer_names = ['1_1', '1_2', 'pool', '2_1', '2_2', 'pool', '3_1', '3_2', '3_3', 'pool', '4_1', '4_2', '4_3']
+        layers = {}
+        h = x
+        for layer_name in layer_names:
+            if layer_name == 'pool':
+                h = F.average_pooling_2d(h, 2, stride=2)
+            else:
+                h = F.relu(self['conv' + layer_name](h))
+                layers[layer_name] = h
+        return layers
