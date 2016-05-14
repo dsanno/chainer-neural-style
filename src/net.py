@@ -34,10 +34,6 @@ class VGG(chainer.Chain):
         else:
             return image
 
-    def weights(self):
-#        return [0, 0, 0.5, 0.5], [0.25, 0.25, 0.25, 0.25]
-        return [0, 0, 0.5, 0.5], [0, 0.5, 0.5, 0]
-
     def __call__(self, x):
         layer_names = ['1_1', '1_2', 'pool', '2_1', '2_2', 'pool', '3_1', '3_2', '3_3', 'pool', '4_1', '4_2', '4_3']
         layers = {}
