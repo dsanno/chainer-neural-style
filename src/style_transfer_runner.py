@@ -36,6 +36,8 @@ def run(args):
     serializers.load_hdf5(args.model, vgg)
     print 'loading neural network model completed'
     optimizer = optimizers.Adam(alpha=args.lr)
+    content_layers = args.content_layers.split(',')
+    style_layers = args.style_layers.split(',')
 
     def on_epoch_done(epoch, x, losses):
         if (epoch + 1) % args.save_iter == 0:
@@ -48,9 +50,9 @@ def run(args):
                 print '  {0:{width}s}: {1:f}'.format(name, loss, width=label_width)
 
     if args.method == 'mrf':
-        model = MRF(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, args.gpu)
+        model = MRF(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.gpu)
     else:
-        model = NeuralStyle(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, args.gpu)
+        model = NeuralStyle(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.gpu)
     out_image = model.fit(content_image, style_image, args.iter, on_epoch_done)
     image = vgg.postprocess(cuda.to_cpu(out_image.data)[0], output_type='RGB').clip(0, 255).astype(np.uint8)
     Image.fromarray(image).save(os.path.join(args.out_dir, 'out.png'))

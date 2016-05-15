@@ -9,13 +9,15 @@ import cupy
 import util
 
 class NeuralStyle(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, device_id=-1):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
         self.style_weight = style_weight
         self.tv_weight = tv_weight
         self.device_id = device_id
+        self.content_layer_names = content_layers
+        self.style_layer_names = style_layers
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -33,10 +35,10 @@ class NeuralStyle(object):
         xp = self.xp
         content_x = Variable(xp.asarray(content_image), volatile=True)
         style_x = Variable(xp.asarray(style_image), volatile=True)
-        content_layer_names = ['3_3', '4_3']
+        content_layer_names = self.content_layer_names
         content_layers = self.model(content_x)
         content_layers = [(name, content_layers[name]) for name in content_layer_names]
-        style_layer_names = ['1_2', '2_2', '3_3', '4_3']
+        style_layer_names = self.style_layer_names
         style_layers = self.model(style_x)
         style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
         link = chainer.Link(x=content_image.shape)
@@ -74,13 +76,15 @@ class NeuralStyle(object):
         return loss_info
 
 class MRF(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, device_id=-1):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
         self.style_weight = style_weight
         self.tv_weight = tv_weight
         self.device_id = device_id
+        self.content_layer_names = content_layers
+        self.style_layer_names = style_layers
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -98,10 +102,10 @@ class MRF(object):
         xp = self.xp
         content_x = Variable(xp.asarray(content_image), volatile=True)
         style_x = Variable(xp.asarray(style_image), volatile=True)
-        content_layer_names = ['4_2']
+        content_layer_names = self.content_layer_names
         content_layers = self.model(content_x)
         content_layers = [(name, content_layers[name]) for name in content_layer_names]
-        style_layer_names = ['3_1', '4_1']
+        style_layer_names = self.style_layer_names
         style_layers = self.model(style_x)
         style_patches = []
         for name in style_layer_names:

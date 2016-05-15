@@ -30,6 +30,10 @@ if __name__ == '__main__':
                         help='image width, height')
     parser.add_argument('--method', default='mrf', type=str, choices=['gram', 'mrf'],
                         help='style transfer method')
+    parser.add_argument('--content_layers', default='4_2', type=str,
+                        help='content layer names')
+    parser.add_argument('--style_layers', default='3_2,4_2', type=str,
+                        help='style layer names')
     args = parser.parse_args()
 
     style_transfer_runner.run(args)
