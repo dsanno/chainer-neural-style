@@ -50,9 +50,9 @@ def run(args):
                 print '  {0:{width}s}: {1:f}'.format(name, loss, width=label_width)
 
     if args.method == 'mrf':
-        model = MRF(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.gpu)
+        model = MRF(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.resolution_num, args.gpu)
     else:
-        model = NeuralStyle(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.gpu)
+        model = NeuralStyle(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.resolution_num, args.gpu)
     out_image = model.fit(content_image, style_image, args.iter, on_epoch_done)
     image = vgg.postprocess(cuda.to_cpu(out_image.data)[0], output_type='RGB').clip(0, 255).astype(np.uint8)
     Image.fromarray(image).save(os.path.join(args.out_dir, 'out.png'))

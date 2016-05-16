@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', '-g', default=-1, type=int,
                         help='GPU ID (negative value indicates CPU)')
     parser.add_argument('--iter', default=2000, type=int,
-                        help='number of iteration')
+                        help='number of iteration for each resolution')
     parser.add_argument('--save_iter', default=100, type=int,
                         help='number of iteration for saving images')
     parser.add_argument('--lr', default=10.0, type=float,
@@ -34,6 +34,8 @@ if __name__ == '__main__':
                         help='content layer names')
     parser.add_argument('--style_layers', default='1_2,2_2,3_3,4_3', type=str,
                         help='style layer names')
+    parser.add_argument('--resolution_num', default=1, type=int, choices=[1,2,3],
+                        help='the number of resolutions')
     args = parser.parse_args()
 
     style_transfer_runner.run(args)

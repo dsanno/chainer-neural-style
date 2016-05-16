@@ -9,7 +9,7 @@ import cupy
 import util
 
 class NeuralStyle(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
@@ -18,6 +18,7 @@ class NeuralStyle(object):
         self.device_id = device_id
         self.content_layer_names = content_layers
         self.style_layer_names = style_layers
+        self.resolution_num = resolution_num
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -33,23 +34,37 @@ class NeuralStyle(object):
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):
         xp = self.xp
-        content_x = Variable(xp.asarray(content_image), volatile=True)
-        style_x = Variable(xp.asarray(style_image), volatile=True)
-        content_layer_names = self.content_layer_names
-        content_layers = self.model(content_x)
-        content_layers = [(name, content_layers[name]) for name in content_layer_names]
-        style_layer_names = self.style_layer_names
-        style_layers = self.model(style_x)
-        style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
-        link = chainer.Link(x=content_image.shape)
-        if self.device_id >= 0:
-            link.to_gpu()
-        link.x.data = xp.random.uniform(-20, 20, size=content_image.shape).astype(np.float32)
-        self.optimizer.setup(link)
-        for epoch in six.moves.range(epoch_num):
-            loss_info = self.__fit_one(link, content_layers, style_grams)
-            if callback:
-                callback(epoch, link.x, loss_info)
+        input_image = None
+        height, width = content_image.shape[-2:]
+        base_epoch = 0
+        for stlide in [4, 2, 1][-self.resolution_num:]:
+            if width // stlide < 64:
+                continue
+            content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
+            style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+            content_layer_names = self.content_layer_names
+            content_layers = self.model(content_x)
+            content_layers = [(name, content_layers[name]) for name in content_layer_names]
+            style_layer_names = self.style_layer_names
+            style_layers = self.model(style_x)
+            style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
+            if input_image is None:
+                input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
+            else:
+                input_image = input_image.repeat(2, 2).repeat(2, 3)
+                h, w = content_x.data.shape[-2:]
+                input_image = input_image[:,:,:h,:w]
+            link = chainer.Link(x=input_image.shape)
+            if self.device_id >= 0:
+                link.to_gpu()
+            link.x.data[:] = xp.asarray(input_image)
+            self.optimizer.setup(link)
+            for epoch in six.moves.range(epoch_num):
+                loss_info = self.__fit_one(link, content_layers, style_grams)
+                if callback:
+                    callback(base_epoch + epoch, link.x, loss_info)
+            base_epoch += epoch_num
+            input_image = link.x.data
         return link.x
 
     def __fit_one(self, link, content_layers, style_grams):
@@ -76,7 +91,7 @@ class NeuralStyle(object):
         return loss_info
 
 class MRF(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
@@ -85,6 +100,7 @@ class MRF(object):
         self.device_id = device_id
         self.content_layer_names = content_layers
         self.style_layer_names = style_layers
+        self.resolution_num = resolution_num
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -100,27 +116,41 @@ class MRF(object):
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):
         xp = self.xp
-        content_x = Variable(xp.asarray(content_image), volatile=True)
-        style_x = Variable(xp.asarray(style_image), volatile=True)
-        content_layer_names = self.content_layer_names
-        content_layers = self.model(content_x)
-        content_layers = [(name, content_layers[name]) for name in content_layer_names]
-        style_layer_names = self.style_layer_names
-        style_layers = self.model(style_x)
-        style_patches = []
-        for name in style_layer_names:
-            patch = util.patch(style_layers[name])
-            patch_norm = F.expand_dims(F.sum(patch ** 2, axis=1) ** 0.5, 1)
-            style_patches.append((name, patch, patch_norm))
-        link = chainer.Link(x=content_image.shape)
-        if self.device_id >= 0:
-            link.to_gpu()
-        link.x.data[:] = xp.asarray(content_image)
-        self.optimizer.setup(link)
-        for epoch in six.moves.range(epoch_num):
-            loss_info = self.__fit_one(link, content_layers, style_patches)
-            if callback:
-                callback(epoch, link.x, loss_info)
+        input_image = None
+        height, width = content_image.shape[-2:]
+        base_epoch = 0
+        for stlide in [4, 2, 1][-self.resolution_num:]:
+            if width // stlide < 64:
+                continue
+            content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
+            style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+            content_layer_names = self.content_layer_names
+            content_layers = self.model(content_x)
+            content_layers = [(name, content_layers[name]) for name in content_layer_names]
+            style_layer_names = self.style_layer_names
+            style_layers = self.model(style_x)
+            style_patches = []
+            for name in style_layer_names:
+                patch = util.patch(style_layers[name])
+                patch_norm = F.expand_dims(F.sum(patch ** 2, axis=1) ** 0.5, 1)
+                style_patches.append((name, patch, patch_norm))
+            if input_image is None:
+                input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+            else:
+                input_image = input_image.repeat(2, 2).repeat(2, 3)
+                h, w = content_x.data.shape[-2:]
+                input_image = input_image[:,:,:h,:w]
+            link = chainer.Link(x=input_image.shape)
+            if self.device_id >= 0:
+                link.to_gpu()
+            link.x.data[:] = xp.asarray(input_image)
+            self.optimizer.setup(link)
+            for epoch in six.moves.range(epoch_num):
+                loss_info = self.__fit_one(link, content_layers, style_patches)
+                if callback:
+                    callback(base_epoch + epoch, link.x, loss_info)
+            base_epoch += epoch_num
+            input_image = link.x.data
         return link.x
 
     def __fit_one(self, link, content_layers, style_patches):

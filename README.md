@@ -42,8 +42,10 @@ GPU device index. Negative value indecates CPU (default: -1)
 * --w (--width) \<integer\>: optional  
 Image width (default: 256)
 * --iter \<integer\>: optional  
-Number of iteration (default: 2000)
-* --save_iter \<integer\>: optional
+Number of iteration for each iteration (default: 2000)
+* --resolution_num \<int\>: optional  
+Number of resolutions (default: 1)
+* --save_iter \<integer\>: optional  
 Number of iteration for saving images (default: 100)
 * --lr \<float\>: optional  
 Learning rate: "alpha" value of ADAM (default: 10)
@@ -73,8 +75,10 @@ GPU device index. Negative value indecates CPU (default: -1)
 * --w (--width) \<integer\>: optional  
 Image width (default: 256)
 * --iter \<integer\>: optional  
-Number of iteration (default: 100)
-* --save_iter \<integer\>: optional
+Number of iteration for each resolution (default: 100)
+* --resolution_num \<int\>: optional  
+Number of resolutions (default: 3)
+* --save_iter \<integer\>: optional  
 Number of iteration for saving images (default: 10)
 * --lr \<float\>: optional  
 Learning rate: "alpha" value of ADAM (default: 2.0)
