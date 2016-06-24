@@ -3,13 +3,14 @@ import six
 import chainer
 from chainer import cuda
 from chainer import functions as F
+from chainer import links as L
 from chainer import Variable
 import cupy
 
 import util
 
 class NeuralStyle(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, initial_image='content', keep_color=False):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
@@ -19,6 +20,8 @@ class NeuralStyle(object):
         self.content_layer_names = content_layers
         self.style_layer_names = style_layers
         self.resolution_num = resolution_num
+        self.initial_image = initial_image
+        self.keep_color = keep_color
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -37,11 +40,15 @@ class NeuralStyle(object):
         input_image = None
         height, width = content_image.shape[-2:]
         base_epoch = 0
+        old_link = None
         for stlide in [4, 2, 1][-self.resolution_num:]:
             if width // stlide < 64:
                 continue
             content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
-            style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+            if self.keep_color:
+                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stlide,::stlide]), content_x.data), volatile=True)
+            else:
+                style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
             content_layer_names = self.content_layer_names
             content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
@@ -49,7 +56,10 @@ class NeuralStyle(object):
             style_layers = self.model(style_x)
             style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
             if input_image is None:
-                input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
+                if self.initial_image == 'content':
+                    input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+                else:
+                    input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
             else:
                 input_image = input_image.repeat(2, 2).repeat(2, 3)
                 h, w = content_x.data.shape[-2:]
@@ -71,6 +81,10 @@ class NeuralStyle(object):
         xp = self.xp
         link.zerograds()
         layers = self.model(link.x)
+        if self.keep_color:
+            trans_layers = self.model(util.gray(link.x))
+        else:
+            trans_layers = layers
         loss_info = []
         loss = Variable(xp.zeros((), dtype=np.float32))
         for name, content_layer in content_layers:
@@ -79,7 +93,7 @@ class NeuralStyle(object):
             loss_info.append(('content_' + name, float(content_loss.data)))
             loss += content_loss
         for name, style_gram in style_grams:
-            gram = util.gram_matrix(layers[name])
+            gram = util.gram_matrix(trans_layers[name])
             style_loss = self.style_weight * F.mean_squared_error(gram, Variable(style_gram.data))
             loss_info.append(('style_' + name, float(style_loss.data)))
             loss += style_loss
@@ -91,7 +105,7 @@ class NeuralStyle(object):
         return loss_info
 
 class MRF(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, keep_color=False):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
@@ -101,6 +115,8 @@ class MRF(object):
         self.content_layer_names = content_layers
         self.style_layer_names = style_layers
         self.resolution_num = resolution_num
+        self.initial_image = initial_image
+        self.keep_color = keep_color
         if device_id >= 0:
             self.xp = cuda.cupy
             self.model.to_gpu(device_id)
@@ -123,7 +139,10 @@ class MRF(object):
             if width // stlide < 64:
                 continue
             content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
-            style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+            if self.keep_color:
+                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stlide,::stlide]), content_x.data), volatile=True)
+            else:
+                style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
             content_layer_names = self.content_layer_names
             content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
@@ -135,7 +154,10 @@ class MRF(object):
                 patch_norm = F.expand_dims(F.sum(patch ** 2, axis=1) ** 0.5, 1)
                 style_patches.append((name, patch, patch_norm))
             if input_image is None:
-                input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+                if self.initial_image == 'content':
+                    input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+                else:
+                    input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
             else:
                 input_image = input_image.repeat(2, 2).repeat(2, 3)
                 h, w = content_x.data.shape[-2:]
@@ -157,6 +179,10 @@ class MRF(object):
         xp = self.xp
         link.zerograds()
         layers = self.model(link.x)
+        if self.keep_color:
+            trans_layers = self.model(util.gray(link.x))
+        else:
+            trans_layers = layers
         loss_info = []
         loss = Variable(xp.zeros((), dtype=np.float32))
         for name, content_layer in content_layers:
@@ -165,7 +191,7 @@ class MRF(object):
             loss_info.append(('content_' + name, float(content_loss.data)))
             loss += content_loss
         for name, style_patch, style_patch_norm in style_patches:
-            patch = util.patch(layers[name])
+            patch = util.patch(trans_layers[name])
             style_loss = self.style_weight * F.mean_squared_error(patch, util.nearest_neighbor_patch(patch, style_patch, style_patch_norm))
             loss_info.append(('style_' + name, float(style_loss.data)))
             loss += style_loss

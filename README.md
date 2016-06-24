@@ -43,6 +43,10 @@ GPU device index. Negative value indecates CPU (default: -1)
 Image width (default: 256)
 * --iter \<integer\>: optional  
 Number of iteration for each iteration (default: 2000)
+* --initial_image \<string\|: optional
+Initial image of optimization: "random" or "content" (default: random)
+* --keep_color: optional
+Keep color phase if specified
 * --resolution_num \<int\>: optional  
 Number of resolutions (default: 1)
 * --save_iter \<integer\>: optional  
@@ -76,6 +80,10 @@ GPU device index. Negative value indecates CPU (default: -1)
 Image width (default: 256)
 * --iter \<integer\>: optional  
 Number of iteration for each resolution (default: 100)
+* --initial_image \<string\|: optional
+Initial image of optimization: "random" or "content" (default: content)
+* --keep_color: optional
+Keep color phase if specified
 * --resolution_num \<int\>: optional  
 Number of resolutions (default: 3)
 * --save_iter \<integer\>: optional  

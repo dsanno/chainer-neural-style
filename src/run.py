@@ -34,8 +34,12 @@ if __name__ == '__main__':
                         help='content layer names')
     parser.add_argument('--style_layers', default='1_2,2_2,3_3,4_3', type=str,
                         help='style layer names')
+    parser.add_argument('--initial_image', default='random', type=str, choices=['content', 'random'],
+                        help='initial image')
     parser.add_argument('--resolution_num', default=1, type=int, choices=[1,2,3],
                         help='the number of resolutions')
+    parser.add_argument('--keep_color', action='store_true',
+                        help='keep image color')
     args = parser.parse_args()
 
     style_transfer_runner.run(args)

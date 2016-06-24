@@ -1,4 +1,5 @@
 import numpy as np
+import six
 
 import chainer
 from chainer import cuda
@@ -23,6 +24,11 @@ def patch(x, ksize=3, stride=1, pad=0):
     w = Variable(xp.identity(ch * ksize * ksize, dtype=np.float32).reshape((ch * ksize * ksize, ch, ksize, ksize)), volatile=x.volatile)
     return F.convolution_2d(x, W=w, stride=stride, pad=pad)
 
+def gray(x):
+    xp = cuda.get_array_module(x.data)
+    w = Variable(xp.asarray([[[[0.114]], [[0.587]], [[0.299]]], [[[0.114]], [[0.587]], [[0.299]]], [[[0.114]], [[0.587]], [[0.299]]]], dtype=np.float32), volatile=x.volatile)
+    return F.convolution_2d(x, W=w)
+
 def nearest_neighbor_patch(x, patch, patch_norm):
     assert patch.data.shape[0] == 1, 'mini batch size of patch must be 1'
     assert patch_norm.data.shape[0] == 1, 'mini batch size of patch_norm must be 1'
@@ -42,3 +48,26 @@ def nearest_neighbor_patch(x, patch, patch_norm):
     min_index = xp.argmax(correlation, axis=1)
     nearest_neighbor = p.take(min_index, axis=1).reshape((ch, b, h, w)).transpose((1, 0, 2, 3))
     return Variable(nearest_neighbor, volatile=x.volatile)
+
+def luminance_only(x, y):
+    xp = cuda.get_array_module(x)
+    w = xp.asarray([0.114, 0.587, 0.299], dtype=np.float32)
+    x_shape = x.shape
+    y_shape = y.shape
+
+    x = x.reshape(x_shape[:2] + (-1,))
+    xl = xp.zeros((x.shape[0], 1, x.shape[2]), dtype=np.float32)
+    for i in six.moves.range(len(x)):
+        xl[i,:] = w.dot(x[i])
+    xl_mean = xp.mean(xl, axis=2, keepdims=True)
+    xl_std = xp.std(xl, axis=2, keepdims=True)
+
+    y = y.reshape(y_shape[:2] + (-1,))
+    yl = xp.zeros((y.shape[0], 1, y.shape[2]), dtype=np.float32)
+    for i in six.moves.range(len(y)):
+        yl[i,:] = w.dot(y[i])
+    yl_mean = xp.mean(yl, axis=2, keepdims=True)
+    yl_std = xp.std(yl, axis=2, keepdims=True)
+
+    xl = (xl - xl_mean) / xl_std * yl_std + yl_mean
+    return xp.repeat(xl, 3, axis=1).reshape(x_shape)
