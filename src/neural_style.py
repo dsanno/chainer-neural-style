@@ -9,7 +9,7 @@ from chainer import Variable
 import util
 
 class NeuralStyle(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, initial_image='content', keep_color=False):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, initial_image='random', keep_color=False):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
@@ -104,7 +104,7 @@ class NeuralStyle(object):
         return loss_info
 
 class MRF(object):
-    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, keep_color=False):
+    def __init__(self, model, optimizer, content_weight, style_weight, tv_weight, content_layers, style_layers, resolution_num=1, device_id=-1, initial_image='content', keep_color=False):
         self.model = model
         self.optimizer = optimizer
         self.content_weight = content_weight
