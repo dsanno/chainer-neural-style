@@ -5,7 +5,6 @@ from chainer import cuda
 from chainer import functions as F
 from chainer import links as L
 from chainer import Variable
-import cupy
 
 import util
 
@@ -29,10 +28,10 @@ class NeuralStyle(object):
             self.xp = np
 
     def fit(self, content_image, style_image, epoch_num, callback=None):
+        device_id = None
         if self.device_id >= 0:
-            with cupy.cuda.Device(self.device_id):
-                return self.__fit(content_image, style_image, epoch_num, callback)
-        else:
+            device_id = self.device_id
+        with cuda.Device(device_id):
             return self.__fit(content_image, style_image, epoch_num, callback)
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):
@@ -124,10 +123,10 @@ class MRF(object):
             self.xp = np
 
     def fit(self, content_image, style_image, epoch_num, callback=None):
+        device_id = None
         if self.device_id >= 0:
-            with cupy.cuda.Device(self.device_id):
-                return self.__fit(content_image, style_image, epoch_num, callback)
-        else:
+            device_id = self.device_id
+        with cuda.Device(device_id):
             return self.__fit(content_image, style_image, epoch_num, callback)
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):
