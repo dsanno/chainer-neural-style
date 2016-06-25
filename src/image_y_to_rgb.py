@@ -26,11 +26,9 @@ if __name__ == '__main__':
         xc[i,:] = colorsys.rgb_to_yiq(*xc[i])
     xc[:, 0] = xl[:, 0]
 
-    print xc[:10]
     for i in six.moves.range(len(xc)):
         xc[i,:] = colorsys.yiq_to_rgb(*xc[i])
 
-    print xc[:10]
     xc = xc * 255
     xc = xc.clip(0, 255).astype(np.uint8).reshape(content_shape)
     Image.fromarray(xc).save(args.output_image)
