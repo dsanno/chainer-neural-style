@@ -71,3 +71,27 @@ def luminance_only(x, y):
 
     xl = (xl - xl_mean) / xl_std * yl_std + yl_mean
     return xp.repeat(xl, 3, axis=1).reshape(x_shape)
+
+def bgr_to_yiq(x):
+    transform = np.asarray([[0.114, 0.587, 0.299], [-0.322, -0.274, 0.596], [0.312, -0.523, 0.211]], dtype=np.float32)
+    n, c, h, w = x.shape
+    x = x.transpose((1, 0, 2, 3)).reshape((c, -1))
+    x = transform.dot(x)
+    return x.reshape((c, n, h, w)).transpose((1, 0, 2, 3))
+
+def yiq_to_bgr(x):
+    transform = np.asarray([[1, -1.106, 1.703], [1, -0.272, -0.647], [1, 0.956, 0.621]], dtype=np.float32)
+    n, c, h, w = x.shape
+    x = x.transpose((1, 0, 2, 3)).reshape((c, -1))
+    x = transform.dot(x)
+    return x.reshape((c, n, h, w)).transpose((1, 0, 2, 3))
+
+def split_bgr_to_yiq(x):
+    x = bgr_to_yiq(x)
+    y = x[:,0:1,:,:]
+    iq = x[:,1:,:,:]
+    return np.repeat(y, 3, axis=1), iq
+
+def join_yiq_to_bgr(y, iq):
+    y = bgr_to_yiq(y)[:,0:1,:,:]
+    return yiq_to_bgr(np.concatenate((y, iq), axis=1))

@@ -40,6 +40,8 @@ if __name__ == '__main__':
                         help='the number of resolutions')
     parser.add_argument('--keep_color', action='store_true',
                         help='keep image color')
+    parser.add_argument('--luminance_only', action='store_true',
+                        help='use luminance only algorithm')
     args = parser.parse_args()
 
     style_transfer_runner.run(args)

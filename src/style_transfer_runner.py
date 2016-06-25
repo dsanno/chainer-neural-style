@@ -5,7 +5,7 @@ from PIL import Image
 import chainer
 from chainer import functions as F
 from chainer import cuda, optimizers, serializers
-from util import total_variation, gram_matrix
+import util
 
 from neural_style import NeuralStyle, MRF
 from net import VGG
@@ -32,6 +32,9 @@ def run(args):
     content_image = open_and_resize_image(args.content, args.width, vgg)
     print 'loading content image completed'
     style_image = open_and_resize_image(args.style, args.width, vgg)
+    if args.luminance_only:
+        content_image, content_iq = util.split_bgr_to_yiq(content_image)
+        style_iamge, style_iq = util.split_bgr_to_yiq(style_image)
     print 'loading style image completed'
     serializers.load_hdf5(args.model, vgg)
     print 'loading neural network model completed'
@@ -41,7 +44,10 @@ def run(args):
 
     def on_epoch_done(epoch, x, losses):
         if (epoch + 1) % args.save_iter == 0:
-            image = vgg.postprocess(cuda.to_cpu(x.data)[0], output_type='RGB').clip(0, 255).astype(np.uint8)
+            image = cuda.to_cpu(x.data)
+            if args.luminance_only:
+                image = util.join_yiq_to_bgr(image, content_iq)
+            image = vgg.postprocess(image[0], output_type='RGB').clip(0, 255).astype(np.uint8)
             Image.fromarray(image).save(os.path.join(args.out_dir, 'out_{0:04d}.png'.format(epoch + 1)))
             print 'epoch {} done'.format(epoch + 1)
             print 'losses:'
@@ -54,5 +60,8 @@ def run(args):
     else:
         model = NeuralStyle(vgg, optimizer, args.content_weight, args.style_weight, args.tv_weight, content_layers, style_layers, args.resolution_num, args.gpu, initial_image=args.initial_image, keep_color=args.keep_color)
     out_image = model.fit(content_image, style_image, args.iter, on_epoch_done)
-    image = vgg.postprocess(cuda.to_cpu(out_image.data)[0], output_type='RGB').clip(0, 255).astype(np.uint8)
+    out_image = cuda.to_cpu(out_image.data)
+    if args.luminance_only:
+        out_image = util.join_yiq_to_bgr(out_image, content_iq)
+    image = vgg.postprocess(out_image[0], output_type='RGB').clip(0, 255).astype(np.uint8)
     Image.fromarray(image).save(os.path.join(args.out_dir, 'out.png'))
