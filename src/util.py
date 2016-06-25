@@ -95,3 +95,23 @@ def split_bgr_to_yiq(x):
 def join_yiq_to_bgr(y, iq):
     y = bgr_to_yiq(y)[:,0:1,:,:]
     return yiq_to_bgr(np.concatenate((y, iq), axis=1))
+
+def match_color_histogram(x, y):
+    z = np.zeros_like(x)
+    shape = x[0].shape
+    for i in six.moves.range(len(x)):
+        a = x[i].reshape((3, -1))
+        a_mean = np.mean(a, axis=1, keepdims=True)
+        a_var = np.cov(a)
+        d, v = np.linalg.eig(a_var)
+        a_sigma_inv = v.dot(np.diag(d ** (-0.5))).dot(v.T)
+
+        b = y[i].reshape((3, -1))
+        b_mean = np.mean(b, axis=1, keepdims=True)
+        b_var = np.cov(b)
+        d, v = np.linalg.eig(b_var)
+        b_sigma = v.dot(np.diag(d ** 0.5)).dot(v.T)
+
+        transform = b_sigma.dot(a_sigma_inv)
+        z[i,:] = (transform.dot(a - a_mean) + b_mean).reshape(shape)
+    return z

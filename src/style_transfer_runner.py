@@ -32,6 +32,8 @@ def run(args):
     content_image = open_and_resize_image(args.content, args.width, vgg)
     print 'loading content image completed'
     style_image = open_and_resize_image(args.style, args.width, vgg)
+    if args.match_color_histogram:
+        style_image = util.match_color_histogram(style_image, content_image)
     if args.luminance_only:
         content_image, content_iq = util.split_bgr_to_yiq(content_image)
         style_iamge, style_iq = util.split_bgr_to_yiq(style_image)
