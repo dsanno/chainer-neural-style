@@ -36,7 +36,12 @@ def run(args):
         style_image = util.match_color_histogram(style_image, content_image)
     if args.luminance_only:
         content_image, content_iq = util.split_bgr_to_yiq(content_image)
-        style_iamge, style_iq = util.split_bgr_to_yiq(style_image)
+        style_image, style_iq = util.split_bgr_to_yiq(style_image)
+        content_mean = np.mean(content_image, axis=(1,2,3), keepdims=True)
+        content_std = np.std(content_image, axis=(1,2,3), keepdims=True)
+        style_mean = np.mean(style_image, axis=(1,2,3), keepdims=True)
+        style_std = np.std(style_image, axis=(1,2,3), keepdims=True)
+        style_image = (style_image - style_mean) / style_std * content_std + content_mean
     print 'loading style image completed'
     serializers.load_hdf5(args.model, vgg)
     print 'loading neural network model completed'
