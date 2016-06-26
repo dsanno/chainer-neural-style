@@ -2,12 +2,13 @@
 
 Implementation of
 * [A Neural Algorithm of Artistic Style](http://arxiv.org/abs/1508.06576)
+* [Preserving Color in Neural Artistic Style Transfer](http://arxiv.org/abs/1606.05897)
 * [Combining Markov Random Fields and Convolutional Neural Networks for Image Synthesis](http://arxiv.org/abs/1601.04589)
 
 # Requirements
 
 * Python 2.7
-* [Chainer 1.8.1](http://chainer.org/)
+* [Chainer 1.9.0](http://chainer.org/)
 * [Pillow](https://pypi.python.org/pypi/Pillow/)
 
 # Usage
@@ -47,6 +48,10 @@ Number of iteration for each iteration (default: 2000)
 Initial image of optimization: "random" or "content" (default: random)
 * --keep_color: optional
 Keep color phase if specified
+* --match_color_histogram: optional  
+Use "Color histogram matching" algorithm in "Preserving Color in Neural Artistic Style Transfer"
+* --luminance_only: optional  
+Use "Luminance-only" algorithm in "Preserving Color in Neural Artistic Style Transfer"
 * --resolution_num \<int\>: optional  
 Number of resolutions (default: 1)
 * --save_iter \<integer\>: optional  
@@ -84,6 +89,10 @@ Number of iteration for each resolution (default: 100)
 Initial image of optimization: "random" or "content" (default: content)
 * --keep_color: optional
 Keep color phase if specified
+* --match_color_histogram: optional  
+Use "Color histogram matching" algorithm in "Preserving Color in Neural Artistic Style Transfer"
+* --luminance_only: optional  
+Use "Luminance-only" algorithm in "Preserving Color in Neural Artistic Style Transfer"
 * --resolution_num \<int\>: optional  
 Number of resolutions (default: 3)
 * --save_iter \<integer\>: optional  
