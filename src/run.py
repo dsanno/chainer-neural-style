@@ -20,13 +20,13 @@ if __name__ == '__main__':
                         help='number of iteration for each resolution')
     parser.add_argument('--save_iter', default=100, type=int,
                         help='number of iteration for saving images')
-    parser.add_argument('--lr', default=10.0, type=float,
+    parser.add_argument('--lr', default=1.0, type=float,
                         help='learning rate')
-    parser.add_argument('--content_weight', default=0.005, type=float,
+    parser.add_argument('--content_weight', default=5, type=float,
                         help='content image weight')
-    parser.add_argument('--style_weight', default=1, type=float,
+    parser.add_argument('--style_weight', default=100, type=float,
                         help='style image weight')
-    parser.add_argument('--tv_weight', default=1e-5, type=float,
+    parser.add_argument('--tv_weight', default=1e-3, type=float,
                         help='total variation weight')
     parser.add_argument('--width', '-w', default=256, type=int,
                         help='image width, height')
