@@ -9,9 +9,9 @@ from chainer import Variable
 def total_variation(x):
     xp = cuda.get_array_module(x.data)
     b, ch, h, w = x.data.shape
-    wh = Variable(xp.asarray([[[[1], [-1]]]], dtype=np.float32).repeat(ch, 0).repeat(ch, 1), volatile=x.volatile)
-    ww = Variable(xp.asarray([[[[1, 1]]]], dtype=np.float32).repeat(ch, 0).repeat(ch, 1), volatile=x.volatile)
-    return F.sum(F.convolution_2d(x, W=wh) ** 2) / ((h - 1) * w) + F.sum(F.convolution_2d(x, W=ww) ** 2) / (h * (w - 1))
+    wh = Variable(xp.asarray([[[[1], [-1]], [[0], [0]], [[0], [0]]], [[[0], [0]], [[1], [-1]], [[0], [0]]], [[[0], [0]], [[0], [0]], [[1], [-1]]]], dtype=np.float32), volatile=x.volatile)
+    ww = Variable(xp.asarray([[[[1, -1]], [[0, 0]], [[0, 0]]], [[[0, 0]], [[1, -1]], [[0, 0]]], [[[0, 0]], [[0, 0]], [[1, -1]]]], dtype=np.float32), volatile=x.volatile)
+    return F.sum(F.convolution_2d(x, W=wh) ** 2) + F.sum(F.convolution_2d(x, W=ww) ** 2)
 
 def gram_matrix(x):
     b, ch, h, w = x.data.shape
