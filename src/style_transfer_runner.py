@@ -9,6 +9,7 @@ import util
 
 from neural_style import NeuralStyle, MRF
 from net import VGG, VGG19
+from lbfgs import LBFGS
 
 def open_and_resize_image(path, target_width, model):
     image = Image.open(path).convert('RGB')
@@ -48,7 +49,7 @@ def run(args):
     print 'loading style image completed'
     serializers.load_hdf5(args.model, vgg)
     print 'loading neural network model completed'
-    optimizer = optimizers.Adam(alpha=args.lr)
+    optimizer = LBFGS(args.lr)
     content_layers = args.content_layers.split(',')
     style_layers = args.style_layers.split(',')
 
