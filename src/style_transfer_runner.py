@@ -14,7 +14,7 @@ def open_and_resize_image(path, target_width, model):
     image = Image.open(path).convert('RGB')
     width, height = image.size
     target_height = int(round(float(height * target_width) / width))
-    image = image.resize((target_width, target_height))
+    image = image.resize((target_width, target_height), Image.BILINEAR)
     return np.expand_dims(model.preprocess(np.asarray(image, dtype=np.float32), input_type='RGB'), 0)
 
 def run(args):
