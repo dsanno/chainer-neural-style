@@ -58,7 +58,7 @@ class NeuralStyle(object):
                 if self.initial_image == 'content':
                     input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
                 else:
-                    input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
+                    input_image = xp.random.normal(0, 1, size=content_x.data.shape).astype(np.float32) * 0.001
             else:
                 input_image = input_image.repeat(2, 2).repeat(2, 3)
                 h, w = content_x.data.shape[-2:]
