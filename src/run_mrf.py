@@ -4,6 +4,8 @@ import style_transfer_runner
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Combining Markov Random Fields and Convolutional Neural Networks for Image Synthesis')
+    parser.add_argument('--type', '-t', default='vgg16', choices=['vgg16', 'vgg19'],
+                        help='model type')
     parser.add_argument('--model', '-m', default='vgg16.model',
                         help='model file path')
     parser.add_argument('--content', '-c', required=True,

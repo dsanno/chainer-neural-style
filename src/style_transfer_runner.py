@@ -8,7 +8,7 @@ from chainer import cuda, optimizers, serializers
 import util
 
 from neural_style import NeuralStyle, MRF
-from net import VGG
+from net import VGG, VGG19
 
 def open_and_resize_image(path, target_width, model):
     image = Image.open(path).convert('RGB')
@@ -28,7 +28,10 @@ def run(args):
         elif not os.path.isdir(args.out_dir):
             print 'file path {} exists but is not directory'.format(args.out_dir)
             exit()
-    vgg = VGG()
+    if args.type == 'vgg19':
+        vgg = VGG19()
+    else:
+        vgg = VGG()
     content_image = open_and_resize_image(args.content, args.width, vgg)
     print 'loading content image completed'
     style_image = open_and_resize_image(args.style, args.width, vgg)

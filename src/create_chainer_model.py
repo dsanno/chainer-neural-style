@@ -5,7 +5,8 @@
 from chainer import link
 from chainer.links.caffe import CaffeFunction
 from chainer import serializers
-from net import VGG
+import sys
+from net import VGG, VGG19
 
 def copy_model(src, dst):
     assert isinstance(src, link.Chain)
@@ -32,11 +33,21 @@ def copy_model(src, dst):
                 b[1].data = a[1].data
             print 'Copy %s' % child.name
 
-print 'load VGG16 caffemodel'
-ref = CaffeFunction('VGG_ILSVRC_16_layers.caffemodel')
-vgg = VGG()
-print 'copy weights'
-copy_model(ref, vgg)
+if len(sys.argv) > 1 and sys.argv[1] == 'vgg19':
+    print 'load VGG19 caffemodel'
+    ref = CaffeFunction('VGG_ILSVRC_19_layers.caffemodel')
+    vgg = VGG19()
+    print 'copy weights'
+    copy_model(ref, vgg)
 
-print 'save "vgg16.model"'
-serializers.save_hdf5('vgg16.model', vgg)
+    print 'save "vgg19.model"'
+    serializers.save_hdf5('vgg19.model', vgg)
+else:
+    print 'load VGG16 caffemodel'
+    ref = CaffeFunction('VGG_ILSVRC_16_layers.caffemodel')
+    vgg = VGG()
+    print 'copy weights'
+    copy_model(ref, vgg)
+
+    print 'save "vgg16.model"'
+    serializers.save_hdf5('vgg16.model', vgg)
