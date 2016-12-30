@@ -40,14 +40,14 @@ class NeuralStyle(object):
         height, width = content_image.shape[-2:]
         base_epoch = 0
         old_link = None
-        for stlide in [4, 2, 1][-self.resolution_num:]:
-            if width // stlide < 64:
+        for stride in [4, 2, 1][-self.resolution_num:]:
+            if width // stride < 64:
                 continue
-            content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
+            content_x = Variable(xp.asarray(content_image[:,:,::stride,::stride]), volatile=True)
             if self.keep_color:
-                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stlide,::stlide]), content_x.data), volatile=True)
+                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x.data), volatile=True)
             else:
-                style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+                style_x = Variable(xp.asarray(style_image[:,:,::stride,::stride]), volatile=True)
             content_layer_names = self.content_layer_names
             content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
@@ -56,7 +56,7 @@ class NeuralStyle(object):
             style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
             if input_image is None:
                 if self.initial_image == 'content':
-                    input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+                    input_image = xp.asarray(content_image[:,:,::stride,::stride])
                 else:
                     input_image = xp.random.normal(0, 1, size=content_x.data.shape).astype(np.float32) * 0.001
             else:
@@ -134,14 +134,14 @@ class MRF(object):
         input_image = None
         height, width = content_image.shape[-2:]
         base_epoch = 0
-        for stlide in [4, 2, 1][-self.resolution_num:]:
-            if width // stlide < 64:
+        for stride in [4, 2, 1][-self.resolution_num:]:
+            if width // stride < 64:
                 continue
-            content_x = Variable(xp.asarray(content_image[:,:,::stlide,::stlide]), volatile=True)
+            content_x = Variable(xp.asarray(content_image[:,:,::stride,::stride]), volatile=True)
             if self.keep_color:
-                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stlide,::stlide]), content_x.data), volatile=True)
+                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x.data), volatile=True)
             else:
-                style_x = Variable(xp.asarray(style_image[:,:,::stlide,::stlide]), volatile=True)
+                style_x = Variable(xp.asarray(style_image[:,:,::stride,::stride]), volatile=True)
             content_layer_names = self.content_layer_names
             content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
@@ -154,7 +154,7 @@ class MRF(object):
                 style_patches.append((name, patch, patch_norm))
             if input_image is None:
                 if self.initial_image == 'content':
-                    input_image = xp.asarray(content_image[:,:,::stlide,::stlide])
+                    input_image = xp.asarray(content_image[:,:,::stride,::stride])
                 else:
                     input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
             else:
