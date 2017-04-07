@@ -104,6 +104,7 @@ def match_color_histogram(x, y):
         a_mean = np.mean(a, axis=1, keepdims=True)
         a_var = np.cov(a)
         d, v = np.linalg.eig(a_var)
+        d += 1e-6
         a_sigma_inv = v.dot(np.diag(d ** (-0.5))).dot(v.T)
 
         b = y[i].reshape((3, -1))
