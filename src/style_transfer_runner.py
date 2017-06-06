@@ -49,7 +49,7 @@ def run(args):
     print 'loading style image completed'
     serializers.load_hdf5(args.model, vgg)
     print 'loading neural network model completed'
-    optimizer = LBFGS(args.lr, size=10)
+    optimizer = LBFGS(args.lr, stack_size=10)
     content_layers = args.content_layers.split(',')
     style_layers = args.style_layers.split(',')
 

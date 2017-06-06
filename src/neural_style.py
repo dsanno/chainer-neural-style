@@ -43,25 +43,27 @@ class NeuralStyle(object):
         for stride in [4, 2, 1][-self.resolution_num:]:
             if width // stride < 64:
                 continue
-            content_x = Variable(xp.asarray(content_image[:,:,::stride,::stride]), volatile=True)
+            content_x = xp.asarray(content_image[:,:,::stride,::stride])
             if self.keep_color:
-                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x.data), volatile=True)
+                style_x = util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x)
             else:
-                style_x = Variable(xp.asarray(style_image[:,:,::stride,::stride]), volatile=True)
+                style_x = xp.asarray(style_image[:,:,::stride,::stride])
             content_layer_names = self.content_layer_names
-            content_layers = self.model(content_x)
+            with chainer.using_config('enable_backprop', False):
+                content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
             style_layer_names = self.style_layer_names
-            style_layers = self.model(style_x)
+            with chainer.using_config('enable_backprop', False):
+                style_layers = self.model(style_x)
             style_grams = [(name, util.gram_matrix(style_layers[name])) for name in style_layer_names]
             if input_image is None:
                 if self.initial_image == 'content':
                     input_image = xp.asarray(content_image[:,:,::stride,::stride])
                 else:
-                    input_image = xp.random.normal(0, 1, size=content_x.data.shape).astype(np.float32) * 0.001
+                    input_image = xp.random.normal(0, 1, size=content_x.shape).astype(np.float32) * 0.001
             else:
                 input_image = input_image.repeat(2, 2).repeat(2, 3)
-                h, w = content_x.data.shape[-2:]
+                h, w = content_x.shape[-2:]
                 input_image = input_image[:,:,:h,:w]
             link = chainer.Link(x=input_image.shape)
             if self.device_id >= 0:
@@ -88,12 +90,12 @@ class NeuralStyle(object):
         loss = Variable(xp.zeros((), dtype=np.float32))
         for name, content_layer in content_layers:
             layer = layers[name]
-            content_loss = self.content_weight * F.mean_squared_error(layer, Variable(content_layer.data))
+            content_loss = self.content_weight * F.mean_squared_error(layer, content_layer)
             loss_info.append(('content_' + name, float(content_loss.data)))
             loss += content_loss
         for name, style_gram in style_grams:
             gram = util.gram_matrix(trans_layers[name])
-            style_loss = self.style_weight * F.mean_squared_error(gram, Variable(style_gram.data))
+            style_loss = self.style_weight * F.mean_squared_error(gram, style_gram)
             loss_info.append(('style_' + name, float(style_loss.data)))
             loss += style_loss
         tv_loss = self.tv_weight * util.total_variation(link.x)
@@ -137,16 +139,18 @@ class MRF(object):
         for stride in [4, 2, 1][-self.resolution_num:]:
             if width // stride < 64:
                 continue
-            content_x = Variable(xp.asarray(content_image[:,:,::stride,::stride]), volatile=True)
+            content_x = xp.asarray(content_image[:,:,::stride,::stride])
             if self.keep_color:
-                style_x = Variable(util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x.data), volatile=True)
+                style_x = util.luminance_only(xp.asarray(style_image[:,:,::stride,::stride]), content_x)
             else:
-                style_x = Variable(xp.asarray(style_image[:,:,::stride,::stride]), volatile=True)
+                style_x = xp.asarray(style_image[:,:,::stride,::stride])
             content_layer_names = self.content_layer_names
-            content_layers = self.model(content_x)
+            with chainer.using_config('enable_backprop', False):
+                content_layers = self.model(content_x)
             content_layers = [(name, content_layers[name]) for name in content_layer_names]
             style_layer_names = self.style_layer_names
-            style_layers = self.model(style_x)
+            with chainer.using_config('enable_backprop', False):
+                style_layers = self.model(style_x)
             style_patches = []
             for name in style_layer_names:
                 patch = util.patch(style_layers[name])
@@ -156,10 +160,10 @@ class MRF(object):
                 if self.initial_image == 'content':
                     input_image = xp.asarray(content_image[:,:,::stride,::stride])
                 else:
-                    input_image = xp.random.uniform(-20, 20, size=content_x.data.shape).astype(np.float32)
+                    input_image = xp.random.uniform(-20, 20, size=content_x.shape).astype(np.float32)
             else:
                 input_image = input_image.repeat(2, 2).repeat(2, 3)
-                h, w = content_x.data.shape[-2:]
+                h, w = content_x.shape[-2:]
                 input_image = input_image[:,:,:h,:w]
             link = chainer.Link(x=input_image.shape)
             if self.device_id >= 0:
@@ -186,7 +190,7 @@ class MRF(object):
         loss = Variable(xp.zeros((), dtype=np.float32))
         for name, content_layer in content_layers:
             layer = layers[name]
-            content_loss = self.content_weight * F.mean_squared_error(layer, Variable(content_layer.data))
+            content_loss = self.content_weight * F.mean_squared_error(layer, content_layer)
             loss_info.append(('content_' + name, float(content_loss.data)))
             loss += content_loss
         for name, style_patch, style_patch_norm in style_patches:
