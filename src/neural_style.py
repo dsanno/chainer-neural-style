@@ -31,7 +31,7 @@ class NeuralStyle(object):
         device_id = None
         if self.device_id >= 0:
             device_id = self.device_id
-        with cuda.Device(device_id):
+        with cuda.get_device_from_id(device_id):
             return self.__fit(content_image, style_image, epoch_num, callback)
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):
@@ -128,7 +128,7 @@ class MRF(object):
         device_id = None
         if self.device_id >= 0:
             device_id = self.device_id
-        with cuda.Device(device_id):
+        with cuda.get_device_from_id(device_id):
             return self.__fit(content_image, style_image, epoch_num, callback)
 
     def __fit(self, content_image, style_image, epoch_num, callback=None):

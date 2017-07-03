@@ -26,7 +26,7 @@ class LBFGSRule(optimizer.UpdateRule):
             self.hyperparam.min_ro = min_ro
 
     def init_state(self, param):
-        with cuda.get_device(param.data):
+        with cuda.get_device_from_array(param.data):
             self.state['s'] = []
 
     def update_core(self, param):
